@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { RotateCw, RotateCcw, ZoomIn, ZoomOut, Crop, RefreshCw, Check, X } from 'lucide-react'
+import { RotateCw, RotateCcw, ZoomIn, ZoomOut, Crop as CropIcon, RefreshCw, Check, X } from 'lucide-react'
 import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 
