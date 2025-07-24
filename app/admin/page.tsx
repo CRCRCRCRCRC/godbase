@@ -381,8 +381,8 @@ export default function AdminPage() {
       {/* Upload Modal */}
       {showUploadModal && (
         <div className="modal-overlay" onClick={() => setShowUploadModal(false)}>
-          <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="modal-content max-w-lg flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">上傳音檔</h3>
               <button
                 onClick={() => setShowUploadModal(false)}
@@ -392,119 +392,123 @@ export default function AdminPage() {
               </button>
             </div>
 
-            <form onSubmit={handleUpload} className="p-6 space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  音檔標題 <span className="text-red-500">*</span>
-                  <span className="text-gray-500 text-xs ml-2">
-                    (最多20字)
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  value={uploadForm.title}
-                  onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value.slice(0, 20) })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="請輸入音檔標題"
-                  required
-                />
-                <div className="text-right text-xs text-gray-500 mt-1">
-                  {uploadForm.title.length}/20
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  說明文字
-                </label>
-                <textarea
-                  value={uploadForm.description}
-                  onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
-                  rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="請輸入詳細說明（選填）"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  縮圖 <span className="text-gray-500 text-xs">(選填)</span>
-                </label>
-                <div className="space-y-3">
-                  {uploadForm.thumbnail && (
-                    <div className="relative w-32 h-20 rounded-lg overflow-hidden border border-gray-200">
-                      <img
-                        src={URL.createObjectURL(uploadForm.thumbnail)}
-                        alt="縮圖預覽"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="flex space-x-2">
-                    <div className="relative flex-1 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-primary-400 transition-colors">
-                      <div>
-                        <ImageIcon className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600">選擇縮圖</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) {
-                            handleThumbnailSelect(file, false)
-                          }
-                        }}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                    </div>
-                    {uploadForm.thumbnail && (
-                      <button
-                        type="button"
-                        onClick={() => setUploadForm({ ...uploadForm, thumbnail: null })}
-                        className="px-4 py-2 text-sm text-red-500 hover:text-red-700 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-                      >
-                        移除
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  音檔檔案 <span className="text-red-500">*</span>
-                </label>
-                <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-400 transition-colors">
-                  {uploadForm.file ? (
-                    <div>
-                      <Upload className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                      <p className="text-sm text-gray-700">已選擇：{uploadForm.file.name}</p>
-                      <button
-                        type="button"
-                        onClick={() => setUploadForm({ ...uploadForm, file: null })}
-                        className="text-sm text-red-500 hover:text-red-700 mt-2"
-                      >
-                        移除檔案
-                      </button>
-                    </div>
-                  ) : (
-                    <div>
-                      <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">點選選擇音檔檔案</p>
-                      <p className="text-xs text-gray-500 mt-1">支援 MP3、WAV、M4A 格式</p>
-                    </div>
-                  )}
+            <div className="flex-1 overflow-y-auto p-6">
+              <form id="upload-form" onSubmit={handleUpload} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    音檔標題 <span className="text-red-500">*</span>
+                    <span className="text-gray-500 text-xs ml-2">
+                      (最多20字)
+                    </span>
+                  </label>
                   <input
-                    type="file"
-                    accept="audio/*"
-                    onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files?.[0] || null })}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    type="text"
+                    value={uploadForm.title}
+                    onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value.slice(0, 20) })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="請輸入音檔標題"
                     required
                   />
+                  <div className="text-right text-xs text-gray-500 mt-1">
+                    {uploadForm.title.length}/20
+                  </div>
                 </div>
-              </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    說明文字
+                  </label>
+                  <textarea
+                    value={uploadForm.description}
+                    onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="請輸入詳細說明（選填）"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    縮圖 <span className="text-gray-500 text-xs">(選填)</span>
+                  </label>
+                  <div className="space-y-3">
+                    {uploadForm.thumbnail && (
+                      <div className="relative w-32 h-20 rounded-lg overflow-hidden border border-gray-200">
+                        <img
+                          src={URL.createObjectURL(uploadForm.thumbnail)}
+                          alt="縮圖預覽"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="flex space-x-2">
+                      <div className="relative flex-1 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-primary-400 transition-colors">
+                        <div>
+                          <ImageIcon className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-600">選擇縮圖</p>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              handleThumbnailSelect(file, false)
+                            }
+                          }}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
+                      {uploadForm.thumbnail && (
+                        <button
+                          type="button"
+                          onClick={() => setUploadForm({ ...uploadForm, thumbnail: null })}
+                          className="px-4 py-2 text-sm text-red-500 hover:text-red-700 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                        >
+                          移除
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    音檔檔案 <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-400 transition-colors">
+                    {uploadForm.file ? (
+                      <div>
+                        <Upload className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                        <p className="text-sm text-gray-700">已選擇：{uploadForm.file.name}</p>
+                        <button
+                          type="button"
+                          onClick={() => setUploadForm({ ...uploadForm, file: null })}
+                          className="text-sm text-red-500 hover:text-red-700 mt-2"
+                        >
+                          移除檔案
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600">點選選擇音檔檔案</p>
+                        <p className="text-xs text-gray-500 mt-1">支援 MP3、WAV、M4A 格式</p>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files?.[0] || null })}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      required
+                    />
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div className="flex-shrink-0 p-6 border-t border-gray-200">
               <div className="flex space-x-4">
                 <button
                   type="button"
@@ -516,13 +520,14 @@ export default function AdminPage() {
                 </button>
                 <button
                   type="submit"
+                  form="upload-form"
                   className="flex-1 btn-primary disabled:opacity-50"
                   disabled={isUploading || !uploadForm.file || !uploadForm.title.trim()}
                 >
                   {isUploading ? '上傳中...' : '上傳'}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
@@ -530,8 +535,8 @@ export default function AdminPage() {
       {/* Edit Modal */}
       {showEditModal && editingAudio && (
         <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-          <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="modal-content max-w-lg flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">編輯音檔</h3>
               <button
                 onClick={() => setShowEditModal(false)}
@@ -541,98 +546,102 @@ export default function AdminPage() {
               </button>
             </div>
 
-            <form onSubmit={handleEdit} className="p-6 space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  音檔標題 <span className="text-red-500">*</span>
-                  <span className="text-gray-500 text-xs ml-2">
-                    (最多20字)
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  value={editForm.title}
-                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value.slice(0, 20) })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="請輸入音檔標題"
-                  required
-                />
-                <div className="text-right text-xs text-gray-500 mt-1">
-                  {editForm.title.length}/20
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  說明文字
-                </label>
-                <textarea
-                  value={editForm.description}
-                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                  rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="請輸入詳細說明（選填）"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  更新縮圖 <span className="text-gray-500 text-xs">(選填)</span>
-                </label>
-                <div className="space-y-3">
-                  {/* 顯示目前縮圖或新縮圖 */}
-                  {(editForm.thumbnail || editingAudio.thumbnail) && (
-                    <div className="relative w-32 h-20 rounded-lg overflow-hidden border border-gray-200">
-                      {editForm.thumbnail ? (
-                        <img
-                          src={URL.createObjectURL(editForm.thumbnail)}
-                          alt="新縮圖預覽"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <Image
-                          src={`/api/audio/thumbnail/${editingAudio.thumbnail}`}
-                          alt={editingAudio.title}
-                          fill
-                          className="object-cover"
-                        />
-                      )}
-                    </div>
-                  )}
-                  
-                  <div className="flex space-x-2">
-                    <div className="relative flex-1 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-primary-400 transition-colors">
-                      <div>
-                        <ImageIcon className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600">
-                          {editForm.thumbnail ? '更換縮圖' : '選擇新縮圖'}
-                        </p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) {
-                            handleThumbnailSelect(file, true)
-                          }
-                        }}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                    </div>
-                    {editForm.thumbnail && (
-                      <button
-                        type="button"
-                        onClick={() => setEditForm({ ...editForm, thumbnail: null })}
-                        className="px-4 py-2 text-sm text-red-500 hover:text-red-700 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-                      >
-                        移除新縮圖
-                      </button>
-                    )}
+            <div className="flex-1 overflow-y-auto p-6">
+              <form id="edit-form" onSubmit={handleEdit} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    音檔標題 <span className="text-red-500">*</span>
+                    <span className="text-gray-500 text-xs ml-2">
+                      (最多20字)
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.title}
+                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value.slice(0, 20) })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="請輸入音檔標題"
+                    required
+                  />
+                  <div className="text-right text-xs text-gray-500 mt-1">
+                    {editForm.title.length}/20
                   </div>
                 </div>
-              </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    說明文字
+                  </label>
+                  <textarea
+                    value={editForm.description}
+                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="請輸入詳細說明（選填）"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    更新縮圖 <span className="text-gray-500 text-xs">(選填)</span>
+                  </label>
+                  <div className="space-y-3">
+                    {/* 顯示目前縮圖或新縮圖 */}
+                    {(editForm.thumbnail || editingAudio.thumbnail) && (
+                      <div className="relative w-32 h-20 rounded-lg overflow-hidden border border-gray-200">
+                        {editForm.thumbnail ? (
+                          <img
+                            src={URL.createObjectURL(editForm.thumbnail)}
+                            alt="新縮圖預覽"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Image
+                            src={`/api/audio/thumbnail/${editingAudio.thumbnail}`}
+                            alt={editingAudio.title}
+                            fill
+                            className="object-cover"
+                          />
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="flex space-x-2">
+                      <div className="relative flex-1 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-primary-400 transition-colors">
+                        <div>
+                          <ImageIcon className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-600">
+                            {editForm.thumbnail ? '更換縮圖' : '選擇新縮圖'}
+                          </p>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              handleThumbnailSelect(file, true)
+                            }
+                          }}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
+                      {editForm.thumbnail && (
+                        <button
+                          type="button"
+                          onClick={() => setEditForm({ ...editForm, thumbnail: null })}
+                          className="px-4 py-2 text-sm text-red-500 hover:text-red-700 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                        >
+                          移除新縮圖
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div className="flex-shrink-0 p-6 border-t border-gray-200">
               <div className="flex space-x-4">
                 <button
                   type="button"
@@ -644,13 +653,14 @@ export default function AdminPage() {
                 </button>
                 <button
                   type="submit"
+                  form="edit-form"
                   className="flex-1 btn-primary disabled:opacity-50"
                   disabled={isEditing || !editForm.title.trim()}
                 >
                   {isEditing ? '保存中...' : '保存修改'}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
