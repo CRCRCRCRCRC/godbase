@@ -12,6 +12,7 @@ import ReactCrop, {
 
 import 'react-image-crop/dist/ReactCrop.css';
 import { RotateCcw, RotateCw, RefreshCw } from 'lucide-react';
+import { useToast } from "./ui/use-toast";
 
 function centerAspectCrop(
   mediaWidth: number,
@@ -50,6 +51,7 @@ export default function ImageEditor({
   const [rotate, setRotate] = useState(0);
   const imgRef = useRef<HTMLImageElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const { toast } = useToast();
 
   const aspect = 1; // Always 1:1
 
@@ -64,19 +66,31 @@ export default function ImageEditor({
     const image = imgRef.current;
     const canvas = previewCanvasRef.current;
     if (!image || !canvas || !completedCrop) {
-      alert("無法處理圖片，請再試一次。");
+       toast({
+         title: "錯誤",
+         description: "無法處理圖片，請再試一次。",
+         variant: "destructive",
+       });
       return;
     }
 
     if (!completedCrop?.width || !completedCrop?.height) {
-        alert("請選取一個有效的裁切區域。");
+        toast({
+            title: "錯誤",
+            description: "請選取一個有效的裁切區域。",
+            variant: "destructive",
+        });
         return;
     }
     
     canvas.toBlob(
       (blob) => {
         if (!blob) {
-            alert("無法建立圖片，請再試一次。");
+            toast({
+                title: "錯誤",
+                description: "無法建立圖片，請再試一次。",
+                variant: "destructive",
+            });
             return;
         }
         onSave(blob);

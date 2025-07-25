@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useCallback } from 'react'
 
 function debounce<T extends (...args: any[]) => any>(fn: T, ms: number) {
   let timer: NodeJS.Timeout
@@ -16,15 +16,9 @@ export function useDebounceEffect(
   waitTime: number,
   deps: any[],
 ) {
-  const debouncedFn = useMemo(
-    () =>
-      debounce((...args: []) => {
-        fn(...args)
-      }, waitTime),
-    [fn, waitTime],
-  )
+  const debouncedFn = useCallback(debounce(fn, waitTime), [fn, waitTime]);
 
   useEffect(() => {
-    debouncedFn()
-  }, deps)
+    debouncedFn();
+  }, [debouncedFn, ...deps]);
 } 
