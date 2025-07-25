@@ -7,8 +7,9 @@ interface AudioFile {
   id: string
   title: string
   description: string
-  filename: string
-  uploadDate: string
+  filename: string; // This is audio_url
+  uploadDate: string;
+  thumbnail?: string; // This is thumbnail_url
 }
 
 interface AudioPlayerProps {
@@ -98,7 +99,7 @@ export default function AudioPlayer({ audio, isPlaying, onPlayPause, onClose }: 
     <>
       <audio
         ref={audioRef}
-        src={`/api/audio/${audio.filename}`}
+        src={audio.filename} // Use the full URL directly
         preload="metadata"
       />
       

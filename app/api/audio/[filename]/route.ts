@@ -1,118 +1,50 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { promises as fs } from 'fs'
-import path from 'path'
-
-interface AudioFile {
-  id: string
-  title: string
-  description: string
-  filename: string
-  uploadDate: string
-  thumbnail?: string
-}
+import { del } from '@vercel/blob';
+import { sql } from '@vercel/postgres';
+import { NextResponse } from 'next/server';
 
 export async function DELETE(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { filename: string } }
 ) {
+  const audioId = params.filename;
+
   try {
-    const { filename } = params
-    const audioDir = path.join(process.cwd(), 'public', 'uploads', 'audio')
-    const thumbnailDir = path.join(process.cwd(), 'public', 'uploads', 'thumbnails')
-    const metadataFile = path.join(audioDir, 'metadata.json')
+    // First, get the URLs from the database
+    const { rows } = await sql`
+      SELECT audio_url, thumbnail_url FROM audios WHERE id = ${audioId};
+    `;
 
-    // 讀取 metadata
-    let audioFiles: AudioFile[] = []
-    try {
-      const metadataContent = await fs.readFile(metadataFile, 'utf-8')
-      audioFiles = JSON.parse(metadataContent)
-    } catch {
-      return NextResponse.json({ error: '找不到音檔' }, { status: 404 })
+    if (rows.length === 0) {
+      return NextResponse.json({ error: 'Audio not found' }, { status: 404 });
     }
 
-    // 找到要刪除的音檔
-    const audioIndex = audioFiles.findIndex(file => file.id === filename)
-    if (audioIndex === -1) {
-      return NextResponse.json({ error: '找不到音檔' }, { status: 404 })
+    const { audio_url, thumbnail_url } = rows[0];
+
+    // Delete files from Vercel Blob
+    if (audio_url) {
+      await del(audio_url);
+    }
+    if (thumbnail_url) {
+      await del(thumbnail_url);
     }
 
-    const audioFile = audioFiles[audioIndex]
-    const filePath = path.join(audioDir, audioFile.filename)
+    // Delete the record from the database
+    await sql`DELETE FROM audios WHERE id = ${audioId};`;
 
-    // 刪除音檔檔案
-    try {
-      await fs.unlink(filePath)
-    } catch {
-      // 檔案可能已經不存在，繼續執行
-    }
-
-    // 刪除縮圖檔案
-    if (audioFile.thumbnail) {
-      const thumbnailPath = path.join(thumbnailDir, audioFile.thumbnail)
-      try {
-        await fs.unlink(thumbnailPath)
-      } catch {
-        // 縮圖可能已經不存在，繼續執行
-      }
-    }
-
-    // 從 metadata 中移除
-    audioFiles.splice(audioIndex, 1)
-    await fs.writeFile(metadataFile, JSON.stringify(audioFiles, null, 2), 'utf-8')
-
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting audio file:', error)
-    return NextResponse.json({ error: '刪除失敗' }, { status: 500 })
+    console.error('Error deleting audio:', error);
+    return NextResponse.json({ error: 'Failed to delete audio' }, { status: 500 });
   }
 }
 
+
+// The GET method is no longer needed here as files are served directly from Vercel Blob URLs.
+// You can remove this or keep it for other purposes if needed.
+// For now, let's return a 404 to avoid confusion.
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { filename: string } }
 ) {
-  try {
-    const { filename } = params
-    const audioDir = path.join(process.cwd(), 'public', 'uploads', 'audio')
-    const filePath = path.join(audioDir, filename)
-
-    // 檢查檔案是否存在
-    try {
-      await fs.access(filePath)
-    } catch {
-      return NextResponse.json({ error: '檔案不存在' }, { status: 404 })
-    }
-
-    // 讀取檔案
-    const fileBuffer = await fs.readFile(filePath)
-    
-    // 設定適當的 Content-Type
-    const ext = path.extname(filename).toLowerCase()
-    let contentType = 'audio/mpeg'
-    
-    switch (ext) {
-      case '.mp3':
-        contentType = 'audio/mpeg'
-        break
-      case '.wav':
-        contentType = 'audio/wav'
-        break
-      case '.m4a':
-        contentType = 'audio/mp4'
-        break
-      default:
-        contentType = 'audio/mpeg'
-    }
-
-    return new Response(fileBuffer, {
-      headers: {
-        'Content-Type': contentType,
-        'Content-Length': fileBuffer.length.toString(),
-        'Accept-Ranges': 'bytes',
-      },
-    })
-  } catch (error) {
-    console.error('Error serving audio file:', error)
-    return NextResponse.json({ error: '無法提供檔案' }, { status: 500 })
-  }
+  return NextResponse.json({ error: 'This endpoint is no longer used. Files are served directly from Vercel Blob.' }, { status: 404 });
 } 

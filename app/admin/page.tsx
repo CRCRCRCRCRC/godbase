@@ -1,215 +1,254 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Upload, X, Trash2, Music, Lock, Edit2, Image as ImageIcon } from 'lucide-react'
+import {
+  Plus,
+  Upload,
+  X,
+  Trash2,
+  Music,
+  Lock,
+  Edit2,
+  Image as ImageIcon,
+} from 'lucide-react'
 import Image from 'next/image'
 import ImageEditor from '../components/ImageEditor'
+import { upload } from '@vercel/blob/client'
 
+// This interface must match the database schema and the GET API response
 interface AudioFile {
-  id: string
-  title: string
-  description: string
-  filename: string
-  uploadDate: string
-  thumbnail?: string
+  id: string;
+  title: string;
+  description: string;
+  filename: string; // This is now audio_url
+  uploadDate: string;
+  thumbnail?: string; // This is now thumbnail_url
 }
 
 export default function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [loginForm, setLoginForm] = useState({ username: '', password: '' })
-  const [audioFiles, setAudioFiles] = useState<AudioFile[]>([])
-  const [showUploadModal, setShowUploadModal] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [showImageEditor, setShowImageEditor] = useState(false)
-  const [editingAudio, setEditingAudio] = useState<AudioFile | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showImageEditor, setShowImageEditor] = useState(false);
+  const [editingAudio, setEditingAudio] = useState<AudioFile | null>(null);
   const [uploadForm, setUploadForm] = useState({
     title: '',
     description: '',
     file: null as File | null,
     thumbnail: null as File | null,
-    originalThumbnail: null as File | null // 用於圖片編輯器
-  })
+    originalThumbnail: null as File | null,
+  });
   const [editForm, setEditForm] = useState({
     title: '',
     description: '',
     thumbnail: null as File | null,
-    originalThumbnail: null as File | null // 用於圖片編輯器
-  })
-  const [isUploading, setIsUploading] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
-  const [error, setError] = useState('')
-  const [currentEditingFor, setCurrentEditingFor] = useState<'upload' | 'edit'>('upload')
+    originalThumbnail: null as File | null,
+  });
+  const [isUploading, setIsUploading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState('');
+  const [currentEditingFor, setCurrentEditingFor] = useState<'upload' | 'edit'>(
+    'upload'
+  );
 
   useEffect(() => {
-    // 檢查是否已登入
-    const auth = localStorage.getItem('admin_auth')
+    const auth = localStorage.getItem('admin_auth');
     if (auth === 'true') {
-      setIsAuthenticated(true)
-      fetchAudioFiles()
+      setIsAuthenticated(true);
+      fetchAudioFiles();
     }
-  }, [])
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
     if (loginForm.username === 'superadmin' && loginForm.password === 'superadmin') {
-      setIsAuthenticated(true)
-      localStorage.setItem('admin_auth', 'true')
-      fetchAudioFiles()
-      setError('')
+      setIsAuthenticated(true);
+      localStorage.setItem('admin_auth', 'true');
+      fetchAudioFiles();
+      setError('');
     } else {
-      setError('帳號或密碼錯誤')
+      setError('帳號或密碼錯誤');
     }
-  }
+  };
 
   const handleLogout = () => {
-    setIsAuthenticated(false)
-    localStorage.removeItem('admin_auth')
-    setLoginForm({ username: '', password: '' })
-  }
+    setIsAuthenticated(false);
+    localStorage.removeItem('admin_auth');
+    setLoginForm({ username: '', password: '' });
+  };
 
   const fetchAudioFiles = async () => {
     try {
-      const response = await fetch('/api/audio')
+      const response = await fetch('/api/audio');
       if (response.ok) {
-        const files = await response.json()
-        setAudioFiles(files)
+        const files = await response.json();
+        setAudioFiles(files);
       }
     } catch (error) {
-      console.error('Failed to fetch audio files:', error)
+      console.error('Failed to fetch audio files:', error);
     }
-  }
+  };
 
-  const handleThumbnailSelect = (file: File, isForEdit: boolean = false) => {
+  const handleThumbnailSelect = (file: File, isForEdit = false) => {
     if (isForEdit) {
-      setEditForm({ ...editForm, originalThumbnail: file })
-      setCurrentEditingFor('edit')
+      setEditForm({ ...editForm, originalThumbnail: file });
+      setCurrentEditingFor('edit');
     } else {
-      setUploadForm({ ...uploadForm, originalThumbnail: file })
-      setCurrentEditingFor('upload')
+      setUploadForm({ ...uploadForm, originalThumbnail: file });
+      setCurrentEditingFor('upload');
     }
-    setShowImageEditor(true)
-  }
+    setShowImageEditor(true);
+  };
 
   const handleImageEditSave = (editedFile: File) => {
     if (currentEditingFor === 'edit') {
-      setEditForm({ ...editForm, thumbnail: editedFile, originalThumbnail: null })
+      setEditForm({ ...editForm, thumbnail: editedFile, originalThumbnail: null });
     } else {
-      setUploadForm({ ...uploadForm, thumbnail: editedFile, originalThumbnail: null })
+      setUploadForm({ ...uploadForm, thumbnail: editedFile, originalThumbnail: null });
     }
-    setShowImageEditor(false)
-  }
+    setShowImageEditor(false);
+  };
 
   const handleImageEditCancel = () => {
     if (currentEditingFor === 'edit') {
-      setEditForm({ ...editForm, originalThumbnail: null })
+      setEditForm({ ...editForm, originalThumbnail: null });
     } else {
-      setUploadForm({ ...uploadForm, originalThumbnail: null })
+      setUploadForm({ ...uploadForm, originalThumbnail: null });
     }
-    setShowImageEditor(false)
-  }
+    setShowImageEditor(false);
+  };
 
   const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!uploadForm.file || !uploadForm.title.trim()) return
+    e.preventDefault();
+    if (!uploadForm.file || !uploadForm.title.trim()) return;
 
-    setIsUploading(true)
-    setError('')
+    setIsUploading(true);
+    setError('');
 
     try {
-      const formData = new FormData()
-      formData.append('audio', uploadForm.file)
-      formData.append('title', uploadForm.title.slice(0, 20))
-      formData.append('description', uploadForm.description)
-      if (uploadForm.thumbnail) {
-        formData.append('thumbnail', uploadForm.thumbnail)
-      }
+      // 1. Upload audio file to Vercel Blob
+      const audioFile = uploadForm.file;
+      const audioBlob = await upload(audioFile.name, audioFile, {
+        access: 'public',
+        handleUploadUrl: '/api/audio/upload',
+      });
 
-      const response = await fetch('/api/audio/upload', {
+      // 2. Upload thumbnail file to Vercel Blob (if exists)
+      let thumbnailBlob = null;
+      if (uploadForm.thumbnail) {
+        const thumbnailFile = uploadForm.thumbnail;
+        thumbnailBlob = await upload(thumbnailFile.name, thumbnailFile, {
+          access: 'public',
+          handleUploadUrl: '/api/audio/upload',
+        });
+      }
+      
+      // 3. Send metadata to our backend to save in Postgres
+      const response = await fetch('/api/audio/create', {
         method: 'POST',
-        body: formData,
-      })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: uploadForm.title.slice(0, 20),
+          description: uploadForm.description,
+          audioUrl: audioBlob.url,
+          thumbnailUrl: thumbnailBlob?.url || null,
+        }),
+      });
 
       if (response.ok) {
-        setShowUploadModal(false)
-        setUploadForm({ title: '', description: '', file: null, thumbnail: null, originalThumbnail: null })
-        fetchAudioFiles()
+        setShowUploadModal(false);
+        setUploadForm({ title: '', description: '', file: null, thumbnail: null, originalThumbnail: null });
+        fetchAudioFiles();
       } else {
-        const errorData = await response.json()
-        setError(errorData.error || '上傳失敗')
+        const errorData = await response.json();
+        setError(errorData.error || '上傳失敗');
       }
     } catch (error) {
-      setError('上傳過程中發生錯誤')
+      console.error('Upload process failed:', error);
+      setError('上傳過程中發生錯誤');
     } finally {
-      setIsUploading(false)
+      setIsUploading(false);
     }
-  }
+  };
 
   const handleEdit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editingAudio || !editForm.title.trim()) return
+    e.preventDefault();
+    if (!editingAudio || !editForm.title.trim()) return;
 
-    setIsEditing(true)
-    setError('')
+    setIsEditing(true);
+    setError('');
 
     try {
-      const formData = new FormData()
-      formData.append('title', editForm.title.slice(0, 20))
-      formData.append('description', editForm.description)
+      let newThumbnailUrl: string | null = null;
+      
+      // If a new thumbnail is selected, upload it
       if (editForm.thumbnail) {
-        formData.append('thumbnail', editForm.thumbnail)
+        const thumbnailFile = editForm.thumbnail;
+        const thumbnailBlob = await upload(thumbnailFile.name, thumbnailFile, {
+          access: 'public',
+          handleUploadUrl: '/api/audio/upload',
+        });
+        newThumbnailUrl = thumbnailBlob.url;
       }
 
       const response = await fetch(`/api/audio/${editingAudio.id}/edit`, {
         method: 'PUT',
-        body: formData,
-      })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editForm.title.slice(0, 20),
+          description: editForm.description,
+          newThumbnailUrl: newThumbnailUrl, // Send the new URL
+        }),
+      });
 
       if (response.ok) {
-        setShowEditModal(false)
-        setEditingAudio(null)
-        setEditForm({ title: '', description: '', thumbnail: null, originalThumbnail: null })
-        fetchAudioFiles()
+        setShowEditModal(false);
+        setEditingAudio(null);
+        setEditForm({ title: '', description: '', thumbnail: null, originalThumbnail: null });
+        fetchAudioFiles();
       } else {
-        const errorData = await response.json()
-        setError(errorData.error || '編輯失敗')
+        const errorData = await response.json();
+        setError(errorData.error || '編輯失敗');
       }
     } catch (error) {
-      setError('編輯過程中發生錯誤')
+      console.error('Edit process failed:', error);
+      setError('編輯過程中發生錯誤');
     } finally {
-      setIsEditing(false)
+      setIsEditing(false);
     }
-  }
+  };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('確定要刪除這個音檔嗎？')) return
+    if (!confirm('確定要刪除這個音檔嗎？')) return;
 
     try {
       const response = await fetch(`/api/audio/${id}`, {
         method: 'DELETE',
-      })
+      });
 
       if (response.ok) {
-        fetchAudioFiles()
+        fetchAudioFiles();
       } else {
-        setError('刪除失敗')
+        setError('刪除失敗');
       }
     } catch (error) {
-      setError('刪除過程中發生錯誤')
+      setError('刪除過程中發生錯誤');
     }
-  }
+  };
 
   const openEditModal = (audio: AudioFile) => {
-    setEditingAudio(audio)
+    setEditingAudio(audio);
     setEditForm({
       title: audio.title,
       description: audio.description,
       thumbnail: null,
-      originalThumbnail: null
-    })
-    setShowEditModal(true)
-  }
-
+      originalThumbnail: null,
+    });
+    setShowEditModal(true);
+  };
+  
   // 登入頁面
   if (!isAuthenticated) {
     return (
@@ -332,7 +371,7 @@ export default function AdminPage() {
                     {audio.thumbnail && (
                       <div className="relative w-full h-32 mb-3 rounded-lg overflow-hidden">
                         <Image
-                          src={`/api/audio/thumbnail/${audio.thumbnail}`}
+                          src={audio.thumbnail} // Use the full URL
                           alt={audio.title}
                           fill
                           className="object-cover"
@@ -368,8 +407,8 @@ export default function AdminPage() {
                 </p>
                 
                 <div className="pt-4 border-t border-gray-200">
-                  <p className="text-xs text-gray-500">
-                    檔名：{audio.filename}
+                  <p className="text-xs text-gray-500 break-all">
+                    檔名URL：{audio.filename}
                   </p>
                 </div>
               </div>
@@ -597,7 +636,7 @@ export default function AdminPage() {
                           />
                         ) : (
                           <Image
-                            src={`/api/audio/thumbnail/${editingAudio.thumbnail}`}
+                            src={editingAudio.thumbnail!} // Use the full URL
                             alt={editingAudio.title}
                             fill
                             className="object-cover"

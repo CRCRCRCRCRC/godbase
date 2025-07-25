@@ -7,9 +7,9 @@ interface AudioFile {
   id: string
   title: string
   description: string
-  filename: string
-  uploadDate: string
-  thumbnail?: string
+  filename: string; // This is audio_url
+  uploadDate: string;
+  thumbnail?: string; // This is thumbnail_url
 }
 
 interface AudioCardProps {
@@ -38,7 +38,7 @@ export default function AudioCard({ audio, isPlaying, onPlay, onShowInfo, isHori
             {audio.thumbnail ? (
               <div className="relative w-16 h-12 rounded-xl overflow-hidden">
                 <Image
-                  src={`/api/audio/thumbnail/${audio.thumbnail}`}
+                  src={audio.thumbnail}
                   alt={audio.title}
                   fill
                   className="object-cover"

@@ -10,9 +10,9 @@ interface AudioFile {
   id: string
   title: string
   description: string
-  filename: string
-  uploadDate: string
-  thumbnail?: string
+  filename: string; // This is now audio_url
+  uploadDate: string;
+  thumbnail?: string; // This is now thumbnail_url
 }
 
 export default function Home() {
@@ -72,14 +72,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 pb-20">
-      {/* 背景裝飾 */}
+      {/* Background Decor */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-200/30 to-purple-200/30 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-pink-200/20 to-blue-200/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-br from-indigo-200/20 to-cyan-200/20 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
-      {/* 精美 Header */}
+      {/* Header */}
       <header className="relative z-10 p-6 lg:p-8">
         <div className="flex justify-start">
           <div className="group cursor-pointer transform transition-all duration-300 hover:scale-105">
@@ -97,7 +97,6 @@ export default function Home() {
 
       {/* Main Layout */}
       <div className="relative z-10 flex">
-        {/* Left Content Area */}
         <main className="w-full px-4 sm:px-6 lg:px-8 py-4">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20">
@@ -153,7 +152,6 @@ export default function Home() {
                   </div>
                 ))}
                 
-                {/* 音檔統計 */}
                 <div className="flex justify-center mt-12">
                   <div className="bg-white/80 backdrop-blur-xl rounded-2xl px-6 py-3 shadow-lg border border-white/20">
                     <p className="text-sm text-gray-600 font-medium">
@@ -166,11 +164,9 @@ export default function Home() {
           )}
         </main>
 
-        {/* Right Info Panel */}
         {selectedAudioForInfo && (
           <div className="fixed right-0 top-0 h-full w-96 bg-white/95 backdrop-blur-xl border-l border-gray-200 shadow-2xl z-30 animate-slide-in-right">
             <div className="p-6 h-full overflow-y-auto">
-              {/* Header */}
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
                 <h3 className="text-xl font-bold text-gray-900">音檔詳情</h3>
                 <button
@@ -181,7 +177,6 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Content */}
               <div className="space-y-6">
                 <div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-2">
@@ -202,8 +197,8 @@ export default function Home() {
                 </div>
 
                 <div className="pt-4 border-t border-gray-200">
-                  <p className="text-xs text-gray-500">
-                    檔案名稱：{selectedAudioForInfo.filename}
+                  <p className="text-xs text-gray-500 break-all">
+                    音檔URL：{selectedAudioForInfo.filename}
                   </p>
                 </div>
               </div>
@@ -212,7 +207,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* Audio Player */}
       {currentAudio && (
         <AudioPlayer
           audio={currentAudio}
