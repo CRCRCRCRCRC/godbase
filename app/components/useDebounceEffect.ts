@@ -1,25 +1,28 @@
-import { useEffect, useCallback } from 'react';
-
-function debounce<T extends (...args: any[]) => any>(fn: T, ms: number): (...args: Parameters<T>) => void {
-  let timer: NodeJS.Timeout;
-
-  return (...args: Parameters<T>) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      fn(...args);
-    }, ms);
-  };
-}
+import { useEffect, useRef } from 'react';
 
 export function useDebounceEffect(
   fn: () => void,
   waitTime: number,
   deps: any[],
 ) {
-  const callback = useCallback(fn, deps);
-  const debouncedFn = useCallback(debounce(callback, waitTime), [callback, waitTime]);
-
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   useEffect(() => {
-    debouncedFn();
-  }, [debouncedFn]);
+    // Clear the previous timeout on re-render
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      fn();
+    }, waitTime);
+
+    // Cleanup function to clear timeout on unmount
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fn, waitTime, ...deps]);
 } 
