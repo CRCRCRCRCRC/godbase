@@ -37,7 +37,7 @@ export default function AdminPage() {
   const [uploadForm, setUploadForm] = useState({
     title: '',
     description: '',
-    file: null as File | null,
+    audio: null as File | null,
     thumbnail: null as File | null,
     originalThumbnail: null as File | null,
   });
@@ -130,44 +130,51 @@ export default function AdminPage() {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uploadForm.file || !uploadForm.title.trim()) return;
+    if (!uploadForm.audio || !uploadForm.title.trim()) return;
 
     setIsUploading(true);
     setError('');
 
     try {
-      // 1. Upload audio file to Vercel Blob
-      const audioFile = uploadForm.file;
-      const audioBlob = await upload(audioFile.name, audioFile, {
-        access: 'public',
-        handleUploadUrl: '/api/audio/upload',
-      });
+      let audioUrl = '';
+      let thumbnailUrl = '';
 
-      // 2. Upload thumbnail file to Vercel Blob (if exists)
-      let thumbnailBlob = null;
-      if (uploadForm.thumbnail) {
-        const thumbnailFile = uploadForm.thumbnail;
-        thumbnailBlob = await upload(thumbnailFile.name, thumbnailFile, {
+      if (uploadForm.audio) {
+        const audioFile = uploadForm.audio;
+        const extension = audioFile.name.split('.').pop();
+        const newPathname = `audio/${crypto.randomUUID()}.${extension}`;
+        const newAudioBlob = await upload(newPathname, audioFile, {
           access: 'public',
           handleUploadUrl: '/api/audio/upload',
         });
+        audioUrl = newAudioBlob.url;
+      }
+
+      if (uploadForm.thumbnail) {
+        const thumbnailFile = uploadForm.thumbnail;
+        const extension = thumbnailFile.name.split('.').pop();
+        const newPathname = `thumbnails/${crypto.randomUUID()}.${extension}`;
+        const newThumbnailBlob = await upload(newPathname, thumbnailFile, {
+          access: 'public',
+          handleUploadUrl: '/api/audio/upload',
+        });
+        thumbnailUrl = newThumbnailBlob.url;
       }
       
-      // 3. Send metadata to our backend to save in Postgres
       const response = await fetch('/api/audio/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: uploadForm.title.slice(0, 20),
           description: uploadForm.description,
-          audioUrl: audioBlob.url,
-          thumbnailUrl: thumbnailBlob?.url || null,
+          audioUrl: audioUrl,
+          thumbnailUrl: thumbnailUrl || null,
         }),
       });
 
       if (response.ok) {
         setShowUploadModal(false);
-        setUploadForm({ title: '', description: '', file: null, thumbnail: null, originalThumbnail: null });
+        setUploadForm({ title: '', description: '', audio: null, thumbnail: null, originalThumbnail: null });
         fetchAudioFiles();
       } else {
         const errorData = await response.json();
@@ -192,13 +199,21 @@ export default function AdminPage() {
       let newThumbnailUrl: string | null = null;
       
       // If a new thumbnail is selected, upload it
-      if (editForm.thumbnail) {
-        const thumbnailFile = editForm.thumbnail;
-        const thumbnailBlob = await upload(thumbnailFile.name, thumbnailFile, {
-          access: 'public',
-          handleUploadUrl: '/api/audio/upload',
-        });
-        newThumbnailUrl = thumbnailBlob.url;
+      if (editForm.thumbnail && editForm.thumbnail.name !== 'from_server') {
+        try {
+          const thumbnailFile = editForm.thumbnail;
+          const extension = thumbnailFile.name.split('.').pop();
+          const newPathname = `thumbnails/${crypto.randomUUID()}.${extension}`;
+          const newThumbnailBlob = await upload(newPathname, thumbnailFile, {
+            access: 'public',
+            handleUploadUrl: '/api/audio/upload',
+          });
+          newThumbnailUrl = newThumbnailBlob.url;
+        } catch (uploadError) {
+          console.error('Thumbnail upload failed:', uploadError);
+          setError('縮圖上傳失敗');
+          return;
+        }
       }
 
       const response = await fetch(`/api/audio/${editingAudio.id}/edit`, {
@@ -519,13 +534,13 @@ export default function AdminPage() {
                     音檔檔案 <span className="text-red-500">*</span>
                   </label>
                   <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-400 transition-colors">
-                    {uploadForm.file ? (
+                    {uploadForm.audio ? (
                       <div>
                         <Upload className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                        <p className="text-sm text-gray-700">已選擇：{uploadForm.file.name}</p>
+                        <p className="text-sm text-gray-700">已選擇：{uploadForm.audio.name}</p>
                         <button
                           type="button"
-                          onClick={() => setUploadForm({ ...uploadForm, file: null })}
+                          onClick={() => setUploadForm({ ...uploadForm, audio: null })}
                           className="text-sm text-red-500 hover:text-red-700 mt-2"
                         >
                           移除檔案
@@ -541,7 +556,7 @@ export default function AdminPage() {
                     <input
                       type="file"
                       accept="audio/*"
-                      onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files?.[0] || null })}
+                      onChange={(e) => setUploadForm({ ...uploadForm, audio: e.target.files?.[0] || null })}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       required
                     />
@@ -564,7 +579,7 @@ export default function AdminPage() {
                   type="submit"
                   form="upload-form"
                   className="flex-1 btn-primary disabled:opacity-50"
-                  disabled={isUploading || !uploadForm.file || !uploadForm.title.trim()}
+                  disabled={isUploading || !uploadForm.audio || !uploadForm.title.trim()}
                 >
                   {isUploading ? '上傳中...' : '上傳'}
                 </button>

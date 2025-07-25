@@ -1,4 +1,4 @@
-import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
+import { handleUpload, type HandleUploadBody, type PutBlobResult } from '@vercel/blob/client';
 import { NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 
@@ -9,23 +9,22 @@ export async function POST(request: Request): Promise<NextResponse> {
     const jsonResponse = await handleUpload({
       body,
       request,
-      onBeforeGenerateToken: async (pathname) => {
+      onBeforeGenerateToken: async (pathname: string) => {
         // This is where you would add your own authentication and authorization logic.
         // For now, we'll allow all uploads.
         
         // The pathname comes from the client-side upload() call.
         // We can use this to set allowed file types.
-        const fileType = request.headers.get('content-type') || '';
-        
         let allowedContentTypes: string[] = [];
-        if (fileType.startsWith('audio/')) {
-            allowedContentTypes = ['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/m4a'];
-        } else if (fileType.startsWith('image/')) {
+        if (pathname.startsWith('audio/')) {
+            allowedContentTypes = ['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/m4a', 'audio/mp3'];
+        } else if (pathname.startsWith('thumbnails/')) {
             allowedContentTypes = ['image/jpeg', 'image/png', 'image/webp'];
         }
 
         return {
           allowedContentTypes,
+          addRandomSuffix: false, // We now generate a unique path on the client
           tokenPayload: JSON.stringify({
             // Here you can add any metadata you want to be available
             // in the onUploadCompleted callback.
@@ -33,7 +32,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           }),
         };
       },
-      onUploadCompleted: async ({ blob, tokenPayload }) => {
+      onUploadCompleted: async ({ blob, tokenPayload }: { blob: PutBlobResult, tokenPayload: string | null }) => {
         // This callback is called after the file has been uploaded to Vercel Blob.
         // You can use this to update your database with the blob's URL.
         
