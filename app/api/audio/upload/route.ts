@@ -23,7 +23,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           tokenPayload: JSON.stringify({}),
         };
       },
-      onUploadCompleted: async ({ blob, tokenPayload }: { blob: PutBlobResult, tokenPayload: string | null }) => {
+      onUploadCompleted: async ({ blob, tokenPayload }: { blob: PutBlobResult, tokenPayload: string | null | undefined }) => {
         console.log('blob upload completed', blob, tokenPayload);
       },
     });
