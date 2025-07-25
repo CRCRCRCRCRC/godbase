@@ -1,14 +1,14 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback } from 'react';
 
-function debounce<T extends (...args: any[]) => any>(fn: T, ms: number) {
-  let timer: NodeJS.Timeout
+function debounce<T extends (...args: any[]) => any>(fn: T, ms: number): (...args: Parameters<T>) => void {
+  let timer: NodeJS.Timeout;
 
   return (...args: Parameters<T>) => {
-    clearTimeout(timer)
+    clearTimeout(timer);
     timer = setTimeout(() => {
-      fn(...args)
-    }, ms)
-  }
+      fn(...args);
+    }, ms);
+  };
 }
 
 export function useDebounceEffect(
@@ -16,9 +16,10 @@ export function useDebounceEffect(
   waitTime: number,
   deps: any[],
 ) {
-  const debouncedFn = useCallback(debounce(fn, waitTime), [fn, waitTime]);
+  const callback = useCallback(fn, deps);
+  const debouncedFn = useCallback(debounce(callback, waitTime), [callback, waitTime]);
 
   useEffect(() => {
     debouncedFn();
-  }, [debouncedFn, ...deps]);
+  }, [debouncedFn]);
 } 

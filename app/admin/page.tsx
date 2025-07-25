@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react';
 import {
   Plus,
   Upload,
@@ -14,6 +14,7 @@ import {
 import Image from 'next/image'
 import ImageEditor from '../components/ImageEditor'
 import { upload } from '@vercel/blob/client'
+import { useRouter } from 'next/navigation';
 
 // This interface must match the database schema and the GET API response
 interface AudioFile {
@@ -49,9 +50,7 @@ export default function AdminPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState('');
-  const [currentEditingFor, setCurrentEditingFor] = useState<'upload' | 'edit'>(
-    'upload'
-  );
+  const [currentEditingFor, setCurrentEditingFor] = useState<'upload' | 'edit' | null>(null);
 
   useEffect(() => {
     const auth = localStorage.getItem('admin_auth');
@@ -91,24 +90,33 @@ export default function AdminPage() {
     }
   };
 
-  const handleThumbnailSelect = (file: File, isForEdit = false) => {
-    if (isForEdit) {
-      setEditForm({ ...editForm, originalThumbnail: file });
-      setCurrentEditingFor('edit');
-    } else {
-      setUploadForm({ ...uploadForm, originalThumbnail: file });
-      setCurrentEditingFor('upload');
+  const handleThumbnailSelect = (e: React.ChangeEvent<HTMLInputElement>, target: 'upload' | 'edit') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (target === 'edit') {
+        setEditForm(prev => ({ ...prev, originalThumbnail: file }));
+        setCurrentEditingFor('edit');
+      } else {
+        setUploadForm(prev => ({ ...prev, originalThumbnail: file }));
+        setCurrentEditingFor('upload');
+      }
+      setShowImageEditor(true);
     }
-    setShowImageEditor(true);
   };
 
-  const handleImageEditSave = (editedFile: File) => {
-    if (currentEditingFor === 'edit') {
-      setEditForm({ ...editForm, thumbnail: editedFile, originalThumbnail: null });
-    } else {
-      setUploadForm({ ...uploadForm, thumbnail: editedFile, originalThumbnail: null });
+  const handleImageEditSave = (savedBlob: Blob) => {
+    const originalFile = currentEditingFor === 'upload' ? uploadForm.originalThumbnail : editForm.originalThumbnail;
+    const fileName = originalFile ? originalFile.name : 'thumbnail.png';
+    const fileType = originalFile ? originalFile.type : 'image/png';
+    const editedFile = new File([savedBlob], fileName, { type: fileType });
+
+    if (currentEditingFor === 'upload') {
+      setUploadForm(prev => ({ ...prev, thumbnail: editedFile }));
+    } else if (currentEditingFor === 'edit') {
+      setEditForm(prev => ({ ...prev, thumbnail: editedFile }));
     }
     setShowImageEditor(false);
+    setCurrentEditingFor(null);
   };
 
   const handleImageEditCancel = () => {
@@ -489,12 +497,7 @@ export default function AdminPage() {
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) {
-                              handleThumbnailSelect(file, false)
-                            }
-                          }}
+                          onChange={(e) => handleThumbnailSelect(e, 'upload')}
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         />
                       </div>
@@ -656,12 +659,7 @@ export default function AdminPage() {
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) {
-                              handleThumbnailSelect(file, true)
-                            }
-                          }}
+                          onChange={(e) => handleThumbnailSelect(e, 'edit')}
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         />
                       </div>
@@ -705,9 +703,13 @@ export default function AdminPage() {
       )}
 
       {/* Image Editor */}
-      {showImageEditor && (currentEditingFor === 'upload' ? uploadForm.originalThumbnail : editForm.originalThumbnail) && (
+      {showImageEditor && (currentEditingFor === 'upload' || currentEditingFor === 'edit') && (
         <ImageEditor
-          file={currentEditingFor === 'upload' ? uploadForm.originalThumbnail! : editForm.originalThumbnail!}
+          src={URL.createObjectURL(
+            currentEditingFor === 'upload'
+              ? uploadForm.originalThumbnail!
+              : editForm.originalThumbnail!
+          )}
           onSave={handleImageEditSave}
           onCancel={handleImageEditCancel}
         />
